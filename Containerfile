@@ -89,9 +89,7 @@ RUN dnf5 -y install sbsigntools
 
 
 
-RUN sbctl sign -s /usr/lib/module/*img
 
-RUN sbctl sign -s /usr/lib/modules/vmlinu*
 
 
 
