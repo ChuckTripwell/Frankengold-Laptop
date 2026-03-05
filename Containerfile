@@ -135,22 +135,25 @@ RUN chmod +x /etc/ublue-os/post-reboot.sh
 
 
 
-RUN cat > /etc/systemd/system/ublue-pre-reboot.service <<'SERVICE'
+RUN mkdir -p /etc/systemd/system /etc/systemd/system/multi-user.target.wants && \
+cat <<'EOF' > /etc/systemd/system/ostree-deploy-watch.path
 [Unit]
-Description=Run pre-reboot script after OSTree pull
-After=ostree-finalize-staged.service
-Requires=ostree-finalize-staged.service
+Description=Watch for new OSTree deployments
+
+[Path]
+PathModified=/sysroot/ostree/deploy
+
+[Install]
+WantedBy=multi-user.target
+EOF
+cat <<'EOF' > /etc/systemd/system/ostree-deploy-watch.service
+[Unit]
+Description=Run signing script after OSTree deployment
 
 [Service]
 Type=oneshot
 ExecStart=/etc/ublue-os/pre-reboot-sign.sh
-User=root
-Group=root
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-SERVICE
+EOF
 
 RUN systemctl enable ublue-pre-reboot.service
 
