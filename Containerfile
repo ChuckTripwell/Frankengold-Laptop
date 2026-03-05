@@ -83,7 +83,7 @@ RUN echo 'REPO="/sysroot/ostree/repo" ' >> /etc/ublue-os/pre-reboot-sign.sh
 RUN echo 'WORKDIR="/tmp/signing" ' >> /etc/ublue-os/pre-reboot-sign.sh
 RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
 RUN echo 'BOOTED_LINE=$(ostree admin status | grep '\*') ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'BRANCH=$(echo "$BOOTED_LINE" | awk '{print ($1=="*")?$2:$1}') ' >> /etc/ublue-os/pre-reboot-sign.sh
+RUN echo "BRANCH=\$(echo \"\$BOOTED_LINE\" | awk '{print (\$1==\"*\")?\$2:\$1}')" >> /etc/ublue-os/pre-reboot-sign.sh
 RUN echo 'COMMIT=$(echo "$BOOTED_LINE" | awk '{print ($1=="*")?$3:$2}') ' >> /etc/ublue-os/pre-reboot-sign.sh
 RUN echo 'CLEAN_COMMIT="${COMMIT%%.*}" ' >> /etc/ublue-os/pre-reboot-sign.sh
 RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
