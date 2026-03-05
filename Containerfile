@@ -130,7 +130,60 @@ RUN chmod +x /etc/ublue-os/pre-reboot-sign.sh
 
 
 
+RUN cat > /etc/ublue-os/post-reboot.sh <<'SCRIPT'
+#!/usr/bin/env bash
+set -euo pipefail
 
+sbctl-batch-sign && bootc switch ghcr.io/chucktripwell/frankengold-desktop:latest
+SCRIPT
+
+RUN chmod +x /etc/ublue-os/post-reboot.sh
+
+
+
+
+
+
+RUN cat > /etc/systemd/system/ublue-pre-reboot.service <<'SERVICE'
+[Unit]
+Description=Run pre-reboot script after OSTree pull
+After=ostree-finalize-staged.service
+Requires=ostree-finalize-staged.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/ublue-os/pre-reboot-sign.sh
+User=root
+Group=root
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+RUN systemctl enable ublue-pre-reboot.service
+
+
+
+
+RUN cat > /etc/systemd/system/ublue-post-boot.service <<'SERVICE'
+[Unit]
+Description=Run post-reboot script after system boot
+After=network.target
+Wants=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/etc/ublue-os/post-reboot.sh
+User=root
+Group=root
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+RUN systemctl enable ublue-post-boot.service
 
 
 
