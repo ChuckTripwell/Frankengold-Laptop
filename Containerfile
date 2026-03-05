@@ -76,6 +76,9 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
+
+
+# STEP: create ublue-os folder and pre-reboot script
 RUN mkdir -p /etc/ublue-os && \
     cat > /etc/ublue-os/pre-reboot-sign.sh <<'SCRIPT'
 #!/usr/bin/env bash
@@ -84,7 +87,7 @@ set -euo pipefail
 REPO="/sysroot/ostree/repo"
 WORKDIR="/tmp/signing"
 
-BOOTED_LINE=$(ostree admin status | grep '\*')
+BOOTED_LINE=$(ostree admin status | grep '*')
 BRANCH=$(echo "$BOOTED_LINE" | awk '{print ($1=="*")?$2:$1}')
 COMMIT=$(echo "$BOOTED_LINE" | awk '{print ($1=="*")?$3:$2}')
 CLEAN_COMMIT="${COMMIT%%.*}"
@@ -98,10 +101,7 @@ for k in $KERNELS; do
     SRC="/usr/lib/modules/$k/vmlinuz"
     DST="$WORKDIR/vmlinuz-$k"
 
-    # Extract kernel
     ostree cat "$CLEAN_COMMIT" "$SRC" > "$DST"
-
-    # Sign it
     sbctl sign -s "$DST"
 
     echo "✓ Signed $SRC"
@@ -115,7 +115,6 @@ for k in $KERNELS; do
     mv "$WORKDIR/vmlinuz-$k" "$WORKDIR/tree/usr/lib/modules/$k/vmlinuz"
 done
 
-# Commit overlay on top of existing commit
 ostree commit \
     --repo="$REPO" \
     --branch="$BRANCH" \
@@ -127,18 +126,6 @@ ostree commit \
 ostree admin deploy "$BRANCH"
 
 echo "Deployment ready. Reboot to use signed kernels."
-SCRIPT
-
-RUN chmod +x /etc/ublue-os/pre-reboot-sign.sh
-
-
-
-
-RUN cat > /etc/ublue-os/post-reboot.sh <<'SCRIPT'
-#!/usr/bin/env bash
-set -euo pipefail
-
-sbctl-batch-sign && bootc switch ghcr.io/chucktripwell/frankengold-desktop:latest
 SCRIPT
 
 RUN chmod +x /etc/ublue-os/post-reboot.sh
