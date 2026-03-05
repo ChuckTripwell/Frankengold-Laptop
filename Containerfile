@@ -6,7 +6,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-zen
+RUN pacman -S --noconfirm linux-cachyos-nvidia-open
 
 
 ##################################################################################################################################################
@@ -59,7 +59,6 @@ RUN dnf5 -y install sbctl
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
-RUN dnf5 -y install systemd-ukify
 
 
 
@@ -68,11 +67,28 @@ RUN dnf5 -y install systemd-ukify
 
 
 
+# Create ostree-update-watch.service
+RUN echo "[Unit]" >> /etc/systemd/system/ostree-update-watch.service && \
+    echo "Description=Run post-OSTree update commands" >> /etc/systemd/system/ostree-update-watch.service && \
+    echo "" >> /etc/systemd/system/ostree-update-watch.service && \
+    echo "[Service]" >> /etc/systemd/system/ostree-update-watch.service && \
+    echo "Type=oneshot" >> /etc/systemd/system/ostree-update-watch.service && \
+    echo "ExecStart=ostree admin finalize-staged & sbctl-batch-sign" >> /etc/systemd/system/ostree-update-watch.service
+
+# Create ostree-update-watch.path
+RUN echo "[Unit]" >> /etc/systemd/system/ostree-update-watch.path && \
+    echo "Description=Watch OSTree deployments for changes" >> /etc/systemd/system/ostree-update-watch.path && \
+    echo "" >> /etc/systemd/system/ostree-update-watch.path && \
+    echo "[Path]" >> /etc/systemd/system/ostree-update-watch.path && \
+    echo "PathModified=/ostree/deploy" >> /etc/systemd/system/ostree-update-watch.path && \
+    echo "Unit=ostree-update-watch.service" >> /etc/systemd/system/ostree-update-watch.path && \
+    echo "" >> /etc/systemd/system/ostree-update-watch.path && \
+    echo "[Install]" >> /etc/systemd/system/ostree-update-watch.path && \
+    echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-update-watch.path
 
 
-
-
-
+RUN systemctl enable ostree-update-watch.service
+RUN systemctl enable ostree-update-watch.path
 
 
 
