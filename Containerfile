@@ -78,8 +78,9 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-RUN cd /etc/ublue-os/ && 
-
+RUN cd /etc/ublue-os/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/ublue-os/pre-reboot-sign.sh
+RUN cd /etc/ublue-os/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/ublue-os/post-reboot.sh
+RUN cd /etc/ublue-os/ && chmod +x ./*.sh
 
 
 
