@@ -77,7 +77,7 @@ RUN echo "After=local-fs.target" >> /etc/systemd/system/ostree-finalize.service
 RUN echo "" >> /etc/systemd/system/ostree-finalize.service
 RUN echo "[Service]" >> /etc/systemd/system/ostree-finalize.service
 RUN echo "Type=oneshot" >> /etc/systemd/system/ostree-finalize.service
-RUN echo "ExecStart=/usr/local/bin/ostree-finalize.sh" >> /etc/systemd/system/ostree-finalize.service
+RUN echo "ExecStart=/etc/ublue-os/ostree-finalize.sh" >> /etc/systemd/system/ostree-finalize.service
 
 # Create ostree-finalize.path
 RUN echo "[Unit]" >> /etc/systemd/system/ostree-finalize.path
@@ -91,19 +91,15 @@ RUN echo "[Install]" >> /etc/systemd/system/ostree-finalize.path
 RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-finalize.path
 
 # Create the wrapper script
-RUN echo '#!/bin/bash' > /usr/local/bin/ostree-finalize.sh
-RUN echo "set -euo pipefail" >> /usr/local/bin/ostree-finalize.sh
-RUN echo "" >> /usr/local/bin/ostree-finalize.sh
-RUN echo "if ostree admin status --verbose | grep -q 'staged'; then" >> /usr/local/bin/ostree-finalize.sh
-RUN echo "    echo '[ostree-finalize] Finalizing staged deployment...'" >> /usr/local/bin/ostree-finalize.sh
-RUN echo "    ostree admin finalize-staged" >> /usr/local/bin/ostree-finalize.sh
-RUN echo "    echo '[ostree-finalize] Signing bootloader...'" >> /usr/local/bin/ostree-finalize.sh
-RUN echo "    sbctl-batch-sign" >> /usr/local/bin/ostree-finalize.sh
-RUN echo "    echo '[ostree-finalize] Done.'" >> /usr/local/bin/ostree-finalize.sh
-RUN echo "else" >> /usr/local/bin/ostree-finalize.sh
-RUN echo "    echo '[ostree-finalize] No staged deployment found, skipping.'" >> /usr/local/bin/ostree-finalize.sh
-RUN echo "fi" >> /usr/local/bin/ostree-finalize.sh
-RUN chmod +x /usr/local/bin/ostree-finalize.sh
+RUN mkdir -p /etc/ublue-os || true
+RUN echo '#!/bin/bash' > /etc/ublue-os/ostree-finalize.sh
+RUN echo 'set -euo pipefail' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo '' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo 'if ostree admin status --verbose | grep -q staged; then' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo '    ostree admin finalize-staged' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo '    sbctl-batch-sign' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo 'fi' >> /etc/ublue-os/ostree-finalize.sh
+RUN chmod +x /etc/ublue-os/ostree-finalize.sh
 
 # Enable the path unit
 RUN systemctl daemon-reload
