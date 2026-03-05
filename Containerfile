@@ -96,6 +96,8 @@ RUN echo '#!/bin/bash' > /etc/ublue-os/ostree-finalize.sh
 RUN echo 'set -euo pipefail' >> /etc/ublue-os/ostree-finalize.sh
 RUN echo '' >> /etc/ublue-os/ostree-finalize.sh
 RUN echo 'if ostree admin status --verbose | grep -q staged; then' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo '    sbctl create-keys || true' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo '    sbctl enroll-keys --microsoft || true' >> /etc/ublue-os/ostree-finalize.sh
 RUN echo '    ostree admin finalize-staged' >> /etc/ublue-os/ostree-finalize.sh
 RUN echo '    sbctl-batch-sign' >> /etc/ublue-os/ostree-finalize.sh
 RUN echo 'fi' >> /etc/ublue-os/ostree-finalize.sh
