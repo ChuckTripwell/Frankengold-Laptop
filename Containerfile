@@ -86,49 +86,15 @@ RUN cd /etc/ublue-os/ && chmod +x ./*.sh
 
 
 
-RUN mkdir -p /etc/systemd/system /etc/systemd/system/multi-user.target.wants && \
-cat <<'EOF' > /etc/systemd/system/ostree-deploy-watch.path
-[Unit]
-Description=Watch for new OSTree deployments
-
-[Path]
-PathModified=/sysroot/ostree/deploy
-
-[Install]
-WantedBy=multi-user.target
-EOF
-cat <<'EOF' > /etc/systemd/system/ostree-deploy-watch.service
-[Unit]
-Description=Run signing script after OSTree deployment
-
-[Service]
-Type=oneshot
-ExecStart=/etc/ublue-os/pre-reboot-sign.sh
-EOF
-
-RUN systemctl enable ublue-pre-reboot.service
+RUN cd /etc/systemd/system/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/systemd/system/pre-reboot-sign.path
+RUN cd /etc/systemd/system/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/systemd/system/pre-reboot-sign.service
+RUN systemctl enable pre-reboot-sign.path
 
 
 
 
-RUN cat > /etc/systemd/system/ublue-post-boot.service <<'SERVICE'
-[Unit]
-Description=Run post-reboot script after system boot
-After=network.target
-Wants=network.target
-
-[Service]
-Type=oneshot
-ExecStart=/etc/ublue-os/post-reboot.sh
-User=root
-Group=root
-RemainAfterExit=no
-
-[Install]
-WantedBy=multi-user.target
-SERVICE
-
-RUN systemctl enable ublue-post-boot.service
+RUN cd /etc/systemd/system/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/systemd/system/post-boot.service
+RUN systemctl enable post-boot.service
 
 
 
