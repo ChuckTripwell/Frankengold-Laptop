@@ -65,28 +65,28 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 ##################################################################################################################################################
 
 # :::::: sign new kernels with sbctl (before a reboot?) :::::: 
-# Create ostree-finalize.service
+# Create ostree-pre-reboot-finalize.service
 #
-RUN echo "[Unit]" >> /etc/systemd/system/ostree-finalize.service
-RUN echo "Description=Finalize staged OSTree deployment and sign bootloader" >> /etc/systemd/system/ostree-finalize.service
-RUN echo "Wants=ostree-finalize.path" >> /etc/systemd/system/ostree-finalize.service
-RUN echo "After=local-fs.target" >> /etc/systemd/system/ostree-finalize.service
-RUN echo "" >> /etc/systemd/system/ostree-finalize.service
-RUN echo "[Service]" >> /etc/systemd/system/ostree-finalize.service
-RUN echo "Type=oneshot" >> /etc/systemd/system/ostree-finalize.service
-RUN echo "ExecStart=/etc/ublue-os/ostree-finalize.sh" >> /etc/systemd/system/ostree-finalize.service
+RUN echo "[Unit]" > /etc/systemd/system/ostree-pre-reboot-finalize.service
+RUN echo "Description=Finalize staged OSTree deployment and sign bootloader" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
+RUN echo "Wants=ostree-finalize.path" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
+RUN echo "After=local-fs.target" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
+RUN echo "" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
+RUN echo "[Service]" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
+RUN echo "Type=oneshot" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
+RUN echo "ExecStart=/etc/ublue-os/ostree-finalize.sh" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
 
-# Create ostree-finalize.path
+# Create ostree-pre-reboot-finalize.path
 #
-RUN echo "[Unit]" >> /etc/systemd/system/ostree-finalize.path
-RUN echo "Description=Watch /ostree/deploy for new OSTree deployments" >> /etc/systemd/system/ostree-finalize.path
-RUN echo "" >> /etc/systemd/system/ostree-finalize.path
-RUN echo "[Path]" >> /etc/systemd/system/ostree-finalize.path
-RUN echo "PathModified=/ostree/deploy" >> /etc/systemd/system/ostree-finalize.path
-RUN echo "Unit=ostree-finalize.service" >> /etc/systemd/system/ostree-finalize.path
-RUN echo "" >> /etc/systemd/system/ostree-finalize.path
-RUN echo "[Install]" >> /etc/systemd/system/ostree-finalize.path
-RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-finalize.path
+RUN echo "[Unit]" > /etc/systemd/system/ostree-pre-reboot-finalize.path
+RUN echo "Description=Watch /ostree/deploy for new OSTree deployments" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
+RUN echo "" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
+RUN echo "[Path]" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
+RUN echo "PathModified=/ostree/deploy" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
+RUN echo "Unit=ostree-finalize.service" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
+RUN echo "" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
+RUN echo "[Install]" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
+RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
 
 # Create the wrapper script
 #
