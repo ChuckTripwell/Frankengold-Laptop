@@ -33,7 +33,7 @@ RUN dnf5 -y install python3-pygame
 ##################################################################################################################################################
 
 RUN dnf5 -y copr enable bieszczaders/kernel-cachyos
-RUN rpm-ostree overrude remove kernel --install kernel-cachyos
+RUN rpm-ostree override remove kernel --install kernel-cachyos
 RUN dnf5 -y copr disable bieszczaders/kernel-cachyos
 
 
