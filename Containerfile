@@ -4,9 +4,10 @@
 FROM ghcr.io/ublue-os/base-main:latest AS cachyos
 
 # :::::: prepare the kernel :::::: 
-RUN rm -rf /lib/modules/*
 RUN dnf5 -y copr enable bieszczaders/kernel-cachyos
-RUN rpm-ostree override remove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra --install kernel-cachyos
+RUN dnf5 -y remove kernel kernel-core
+RUN rm -rf /lib/modules/*
+RUN dnf5 -y install --allowerasing kernel-cachyos
 RUN dnf5 -y copr disable bieszczaders/kernel-cachyos
 
 
