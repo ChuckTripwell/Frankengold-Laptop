@@ -1,4 +1,16 @@
 ##################################################################################################################################################
+### :::::: pull cachyos :::::: ###
+##################################################################################################################################################
+FROM ghcr.io/ublue-os/base-main:latest AS cachyos
+
+# :::::: prepare the kernel :::::: 
+RUN rm -rf /lib/modules/*
+RUN dnf5 -y copr enable bieszczaders/kernel-cachyos
+RUN rpm-ostree override remove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra --install kernel-cachyos
+RUN dnf5 -y copr disable bieszczaders/kernel-cachyos
+
+
+##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
@@ -10,6 +22,11 @@ RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask -
 RUN mkdir -p /usr/share/distrobox/
 RUN touch /usr/share/distrobox/distrobox.conf
 RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
+
+# :::::: forcefully remove and replace kernel :::::: 
+RUN rm -rf /lib/modules
+COPY --from=cachyos /lib/modules /lib/modules
+COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install rpmdevtools akmods
@@ -32,10 +49,9 @@ RUN dnf5 -y install python3-pygame
 ### :::::: fixes :::::: ###
 ##################################################################################################################################################
 
-RUN dnf5 -y copr enable bieszczaders/kernel-cachyos
-RUN rpm-ostree override remove kernel --install kernel-cachyos
-RUN dnf5 -y copr disable bieszczaders/kernel-cachyos
-
+# :::::: install sbctl to sign some keys later..? ::::::
+RUN dnf5 -y copr enable chenxiaolong/sbctl
+RUN dnf5 -y install sbctl
 
 ##################################################################################################################################################
 ### :::::: fixes end here :::::: ###
@@ -47,9 +63,6 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       printf 'hostonly=no\nadd_dracutmodules+=" ostree bootc "' | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-modules.conf && \
       sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
-
-# test 
-#RUN sbctl-batch-sign
 
 
 #  :::::: finish :::::: 
