@@ -6,7 +6,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-zen
+RUN pacman -S --noconfirm linux-cachyos
 #linux-cachyos-nvidia-open
 
 
@@ -78,23 +78,16 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-RUN cd /etc/ublue-os/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/ublue-os/pre-reboot-sign.sh
-RUN cd /etc/ublue-os/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/ublue-os/post-reboot.sh
-RUN cd /etc/ublue-os/ && chmod +x ./*.sh
+#RUN cd /etc/ublue-os/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/ublue-os/pre-reboot-sign.sh
+#RUN cd /etc/ublue-os/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/ublue-os/post-reboot.sh
+#RUN cd /etc/ublue-os/ && chmod +x ./*.sh
 
+#RUN cd /etc/systemd/system/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/systemd/system/pre-reboot-sign.path
+#RUN cd /etc/systemd/system/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/systemd/system/pre-reboot-sign.service
+#RUN systemctl enable pre-reboot-sign.path
 
-
-
-
-RUN cd /etc/systemd/system/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/systemd/system/pre-reboot-sign.path
-RUN cd /etc/systemd/system/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/systemd/system/pre-reboot-sign.service
-RUN systemctl enable pre-reboot-sign.path
-
-
-
-
-RUN cd /etc/systemd/system/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/systemd/system/post-boot.service
-RUN systemctl enable post-boot.service
+#RUN cd /etc/systemd/system/ && wget https://raw.githubusercontent.com/ChuckTripwell/files-for-frankengold/refs/heads/main/Desktop/etc/systemd/system/post-boot.service
+#RUN systemctl enable post-boot.service
 
 
 
