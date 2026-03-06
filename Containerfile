@@ -104,7 +104,7 @@ RUN chmod +x /etc/ublue-os/ostree-finalize.sh
 
 # Enable the path unit
 #
-RUN systemctl enable ostree-finalize.path
+RUN systemctl enable ostree-pre-reboot-finalize.path
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
