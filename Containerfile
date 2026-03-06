@@ -84,7 +84,7 @@ RUN echo "Description=Watch /ostree/deploy for new OSTree deployments" >> /etc/s
 RUN echo "" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
 RUN echo "[Path]" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
 RUN echo "PathModified=/ostree/deploy" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
-RUN echo "Unit=ostree-finalize.service" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
+RUN echo "Unit=ostree-pre-reboot-finalize.service" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
 RUN echo "" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
 RUN echo "[Install]" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
 RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
