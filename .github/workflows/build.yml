@@ -46,6 +46,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Create private key
+        env:
+          KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
+        run: |
+          echo "$KERNEL_SECRET" > /tmp/MOK.priv
+          chmod 600 /tmp/MOK.priv
+
+      - name: Sign the kernel
+        run: |
+          sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz /usr/lib/modules/$(uname -r)/vmlinuz
+
+      - name: Cleanup
+        run: |
+          rm -f /tmp/MOK.priv
+
       # This is optional, but if you see that your builds are way too big for the runners, you can enable this by uncommenting the following lines:
       - name: Maximize build space
         uses: ublue-os/remove-unwanted-software@695eb75bc387dbcd9685a8e72d23439d8686cba6
