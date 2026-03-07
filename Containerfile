@@ -49,20 +49,15 @@ RUN dnf5 -y install python3-pygame
 # :::::: SecureBoot stuff :::::: 
 
 
-# Use build-time secret to sign the kernel
-# The MOK.priv is never written into the final image
-RUN --mount=type=secret,id=MOK_SECRET \
-    sh -c '\
-        MOK_PRIV=$(mktemp) && \
-        cp /run/secrets/MOK_SECRET "$MOK_PRIV" && \
-        chmod 600 "$MOK_PRIV" && \
-        VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && \
-        [ -n "$VMLINUZ" ] || (echo "Kernel not found!" && exit 1) && \
-        SIGNED=$(mktemp) && \
-        sbsign --key "$MOK_PRIV" --cert MOK.x509 --output "$SIGNED" "$VMLINUZ" && \
-        install -m 0644 "$SIGNED" "$VMLINUZ" && \
-        rm -f "$SIGNED" "$MOK_PRIV" \
-    '
+RUN MOK_PRIV=$(mktemp) && \
+    echo "$MOK_SECRET" > "$MOK_PRIV" && \
+    chmod 600 "$MOK_PRIV" && \
+    VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && \
+    [ -n "$VMLINUZ" ] || (echo "Kernel not found!" && exit 1) && \
+    SIGNED=$(mktemp) && \
+    sbsign --key "$MOK_PRIV" --cert MOK.x509 --output "$SIGNED" "$VMLINUZ" && \
+    install -m 0644 "$SIGNED" "$VMLINUZ" && \
+    rm -f "$SIGNED" "$MOK_PRIV"
 
 
 
