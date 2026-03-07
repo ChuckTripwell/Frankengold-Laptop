@@ -1,15 +1,12 @@
 ##################################################################################################################################################
 ### :::::: pull cachyos :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/base-main:latest AS cachyos
+FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 
 # :::::: prepare the kernel :::::: 
-RUN dnf5 -y copr enable bieszczaders/kernel-cachyos
-RUN dnf5 -y remove kernel kernel-core
 RUN rm -rf /lib/modules/*
-RUN dnf5 -y install --allowerasing kernel-cachyos
-RUN dnf5 -y copr disable bieszczaders/kernel-cachyos
-
+RUN pacman -Sy --noconfirm
+RUN pacman -S --noconfirm linux-cachyos-nvidia-open
 
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
@@ -46,18 +43,6 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install python3-pygame
 
-##################################################################################################################################################
-### :::::: fixes :::::: ###
-##################################################################################################################################################
-
-# :::::: install sbctl to sign some keys later..? ::::::
-RUN dnf5 -y copr enable chenxiaolong/sbctl
-RUN dnf5 -y install sbctl
-
-##################################################################################################################################################
-### :::::: fixes end here :::::: ###
-##################################################################################################################################################
-
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
@@ -65,6 +50,9 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
+# test 
+#RUN sbctl-batch-sign
+#RUN sbctl enroll-keys --microsoft
 
 #  :::::: finish :::::: 
 ENV DRACUT_NO_XATTR=1
