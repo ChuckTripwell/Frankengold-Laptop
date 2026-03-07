@@ -105,23 +105,6 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
 
-      - name: Create MOK private key
-        env:
-          KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
-        run: |
-          echo "$KERNEL_SECRET" > /tmp/MOK.priv
-          chmod 600 /tmp/MOK.priv
-
-      - name: Sign kernel image
-        run: |
-          vmlinuz=$(find /usr/lib/modules -type f -name vmlinuz)
-          sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$vmlinuz"
-          install -m 0644 signed-vmlinuz "$vmlinuz"
-
-      - name: Cleanup
-        run: |
-          rm -f /tmp/MOK.priv
-      
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
       # This does not make your image faster to download, just provides better resumability and fixes a few errors.
       # Documentation for Rechunk is provided on their github repository at https://github.com/hhd-dev/rechunk
