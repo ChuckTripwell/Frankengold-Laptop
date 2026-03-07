@@ -39,7 +39,7 @@ RUN dnf5 -y install rpmdevtools akmods
 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
-RUN printf '%s\n' "$KERNEL_SECRET" > MOK.priv && mv MOK.priv /tmp/MOK.priv && chmod 600 /tmp/MOK.priv && VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$VMLINUZ" && install -m 0644 signed-vmlinuz "$VMLINUZ" && rm -f signed-vmlinuz /tmp/MOK.priv
+RUN printf '%s\n' "$KERNEL_SECRET" > /tmp/MOK.priv && chmod 600 /tmp/MOK.priv && VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$VMLINUZ" && install -m 0644 signed-vmlinuz "$VMLINUZ" && rm -f signed-vmlinuz /tmp/MOK.priv
 
 
 RUN mkdir -p /etc/secureboot_keys
