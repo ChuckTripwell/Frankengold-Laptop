@@ -114,8 +114,7 @@ jobs:
 
       - name: Sign the kernel
         run: |
-          vmlinuz=$(find /usr/lib/modules -type f -name vmlinuz)
-          sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$vmlinuz" && mv -f signed-vmlinuz "$vmlinuz"
+          sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz /usr/lib/modules/*/vmlinuz && mv -f signed-vmlinuz /usr/lib/modules/*/vmlinuz
 
       - name: Cleanup
         run: |
