@@ -104,6 +104,7 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
+      
       # sign the kernel 
       - name: Create private key
         env:
@@ -112,10 +113,19 @@ jobs:
           echo "$KERNEL_SECRET" > /tmp/MOK.priv
           chmod 600 /tmp/MOK.priv
 
-      - name: Sign the kernel
+      - name: Sign the kernel inside the container
         run: |
+          # Mount the built image filesystem
+          mnt=$(buildah mount ${{ steps.build_image.outputs.image }})
+          
+          # Find vmlinuz inside the mounted filesystem
           vmlinuz=$(find "$mnt/usr/lib/modules" -type f -name vmlinuz)
+          
+          # Sign it
           sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$vmlinuz" && mv -f signed-vmlinuz "$vmlinuz"
+          
+          # Unmount the container filesystem
+          buildah unmount "$mnt"
 
       - name: Cleanup
         run: |
