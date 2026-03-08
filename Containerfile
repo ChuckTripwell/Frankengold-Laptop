@@ -39,9 +39,9 @@ RUN dnf5 -y install rpmdevtools akmods
 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
-RUN mkdir -p /etc/secureboot_keys
-COPY MOK.pem /etc/secureboot_keys/
-COPY MOK.der /etc/secureboot_keys/
+RUN mkdir -p /usr/share/cert/
+COPY MOK.pem /usr/share/cert/
+COPY MOK.der /usr/share/cert/
 
 
 COPY /build_files/custom-kernel.sh /
