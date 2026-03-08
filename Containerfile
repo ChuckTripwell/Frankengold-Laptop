@@ -39,9 +39,17 @@ RUN dnf5 -y install rpmdevtools akmods
 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
-#RUN mkdir -p /etc/secureboot_keys
-#COPY MOK.pem /etc/secureboot_keys/
-#COPY MOK.der /etc/secureboot_keys/
+RUN mkdir -p /etc/secureboot_keys
+COPY MOK.pem /etc/secureboot_keys/
+COPY MOK.der /etc/secureboot_keys/
+
+
+COPY /modules/custom-kernel/custom-kernel.sh /
+RUN chmod +x /custom-kernel.sh && /custom-kernel.sh
+#RUN rm -rf /custom-kernel.sh
+
+
+
 
 RUN echo '[Unit]' > /etc/systemd/system/add-mok-key.service
 RUN echo 'Description=Add MOK Key Using mokutil' >> /etc/systemd/system/add-mok-key.service
