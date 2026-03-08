@@ -39,9 +39,10 @@ RUN dnf5 -y install rpmdevtools akmods
 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
-RUN --mount=type=secret,id=github_token,target=/run/secrets/github_token \
-    KERNEL_SECRET=$(cat /run/secrets/github_token) && \
-    printf '%s\n' "$KERNEL_SECRET" > /tmp/MOK.priv
+RUN mkdir -p /run/secrets/
+
+RUN --mount=type=secret,id=KERNEL_SECRET,target=/run/secrets/KERNEL_SECRET \
+    sh -c 'cat /run/secrets/KERNEL_SECRET > /tmp/MOK.priv && chmod 600 /tmp/MOK.priv'
 
 RUN VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$VMLINUZ" && install -m 0644 signed-vmlinuz "$VMLINUZ" && rm -f signed-vmlinuz /tmp/MOK.priv
 
