@@ -12,10 +12,10 @@ error() {
 log "Starting kernel signing script..."
 
 # Read configuration
-SIGNING_KEY=$(echo "$1" | jq -r '.sign.key // ""')
-SIGNING_CERT=$(echo "$2" | jq -r '.sign.cert // ""')
-MOK_PASSWORD=$(echo "$3" | jq -r '.sign["mok-password"] // ""')
-INITRAMFS=$(echo "$4" | jq -r '.initramfs // false')
+SIGNING_KEY=$(echo "$1")
+SIGNING_CERT=$(echo "$2")
+MOK_PASSWORD=$(echo "$3")
+INITRAMFS=$(echo "$4")
 
 SECURE_BOOT=false
 
