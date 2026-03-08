@@ -45,7 +45,7 @@ COPY MOK.der /etc/secureboot_keys/
 
 
 COPY /build_files/custom-kernel.sh /
-RUN chmod +x /custom-kernel.sh && /custom-kernel.sh
+RUN chmod +x /custom-kernel.sh && /custom-kernel.sh /etc/secureboot_keys/MOK.der /etc/secureboot_keys/MOK.pem "universalblue" false
 #RUN rm -rf /custom-kernel.sh
 
 
