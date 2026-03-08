@@ -38,7 +38,10 @@ RUN dnf5 -y install rpmdevtools akmods
 # :::::: SecureBoot stuff :::::: 
 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
-COPY MOK.priv /tmp/
+
+RUN --mount=type=secret,id=github_token,env=KERNEL_SECRET \
+    echo printf '%s\n' "$KERNEL_SECRET" > /tmp/MOK.priv
+
 RUN VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$VMLINUZ" && install -m 0644 signed-vmlinuz "$VMLINUZ" && rm -f signed-vmlinuz /tmp/MOK.priv
 
 
