@@ -6,13 +6,9 @@ set -euo pipefail
 ############################
 
 MOK_PASSWORD="universalblue"
-
-MOK_CERT="/usr/share/cert/MOK.pem"
 MOK_DER="/usr/share/cert/MOK.der"
 MOK_PRIV="/tmp/MOK.priv"
-
 SERVICE_PATH="/etc/systemd/system/mok-enroll.service"
-
 SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 
 ############################
@@ -20,7 +16,6 @@ SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 ############################
 
 install -dm755 /usr/share/cert
-install -m644 MOK.pem "$MOK_CERT"
 install -m644 MOK.der "$MOK_DER"
 
 ############################
@@ -31,19 +26,19 @@ umask 077
 printf "%s" "${KERNEL_SECRET:?missing KERNEL_SECRET}" > "$MOK_PRIV"
 
 ############################
-# Sign kernel modules
+# Sign kernel modules (DER)
 ############################
 
 while IFS= read -r module; do
-    "$SIGN_FILE" sha256 "$MOK_PRIV" "$MOK_CERT" "$module"
+    "$SIGN_FILE" sha256 "$MOK_PRIV" "$MOK_DER" "$module"
 done < <(find /usr/lib/modules -type f -name "*.ko")
 
 ############################
-# Sign kernel images
+# Sign kernel images (DER)
 ############################
 
 while IFS= read -r kernel; do
-    "$SIGN_FILE" sha256 "$MOK_PRIV" "$MOK_CERT" "$kernel"
+    "$SIGN_FILE" sha256 "$MOK_PRIV" "$MOK_DER" "$kernel"
 done < <(find /usr/lib/modules -type f -name "vmlinuz*")
 
 ############################
@@ -55,18 +50,18 @@ for dir in /usr/lib/modules/*; do
 done
 
 ############################
-# Create systemd service
+# Create systemd service for MOK enrollment
 ############################
 
 cat > "$SERVICE_PATH" <<EOF
 [Unit]
 Description=Enroll MOK key on first boot
-ConditionPathExists=${MOK_CERT}
+ConditionPathExists=${MOK_DER}
 ConditionPathExists=!/var/.mok-enrolled
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c '(echo "${MOK_PASSWORD}"; echo "${MOK_PASSWORD}") | mokutil --import "${MOK_CERT}"'
+ExecStart=/bin/sh -c "printf '%s\n%s\n' \"$MOK_PASSWORD\" \"$MOK_PASSWORD\" | mokutil --import \"$MOK_DER\""
 ExecStartPost=/usr/bin/touch /var/.mok-enrolled
 RemainAfterExit=yes
 
