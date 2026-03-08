@@ -42,9 +42,9 @@ RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 RUN mkdir -p /run/secrets/
 
 RUN --mount=type=secret,id=KERNEL_SECRET,target=/run/secrets/KERNEL_SECRET \
-    sh -c 'cat /run/secrets/KERNEL_SECRET > /tmp/MOK.priv && chmod 600 /tmp/MOK.priv'
+    sh -c 'cat /run/secrets/KERNEL_SECRET > /tmp/MOK.priv && chmod 600 /tmp/MOK.priv && VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$VMLINUZ" && install -m 0644 signed-vmlinuz "$VMLINUZ" && rm -f signed-vmlinuz /tmp/MOK.priv'
 
-RUN VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$VMLINUZ" && install -m 0644 signed-vmlinuz "$VMLINUZ" && rm -f signed-vmlinuz /tmp/MOK.priv
+#RUN VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$VMLINUZ" && install -m 0644 signed-vmlinuz "$VMLINUZ" && rm -f signed-vmlinuz /tmp/MOK.priv
 
 
 RUN mkdir -p /etc/secureboot_keys
