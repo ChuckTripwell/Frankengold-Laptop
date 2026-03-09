@@ -44,8 +44,9 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 # :::::: Run bash scripts :::::: 
-RUN chmod +x /ctx/custom-kernel.sh
-RUN sh /ctx/custom-kernel.sh
+COPY --from="ctx" /custom-kernel.sh /tmp/
+RUN chmod +x /tmp/custom-kernel.sh
+RUN sh /tmp/custom-kernel.sh
 
 
 
