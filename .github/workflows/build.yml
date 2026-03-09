@@ -104,8 +104,15 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
-          build-args: |
-            KERNEL_SECRET=${{ secrets.KERNEL_SECRET }}
+         
+      - name: Write kernel signing key
+        shell: bash
+        env:
+          KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
+        run: |
+          printf '%s\n' "$KERNEL_SECRET" > MOK.priv
+          chmod 600 MOK.priv
+            
 
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
       # This does not make your image faster to download, just provides better resumability and fixes a few errors.
