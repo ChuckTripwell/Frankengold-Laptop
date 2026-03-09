@@ -48,8 +48,8 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 ARG KERNEL_SECRET
-COPY MOK.priv /tmp/MOK.priv && \
-      chmod 600 /tmp/MOK.priv
+COPY MOK.priv /tmp/MOK.priv
+RUN chmod 600 /tmp/MOK.priv
 
 COPY --from="ctx" /MOK.der /usr/share/cert/
 
