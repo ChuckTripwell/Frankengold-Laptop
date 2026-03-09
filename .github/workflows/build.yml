@@ -104,7 +104,13 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
-
+      #adding MOK,priv
+      - name: Write secret to temp file and export
+        run: |
+          mkdir -p /tmp/secret
+          echo "${{ secrets.KERNEL_SECRET }}" > /tmp/secret/MOK.priv
+          chmod 600 /tmp/secret/MOK.priv      
+      
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
       # This does not make your image faster to download, just provides better resumability and fixes a few errors.
       # Documentation for Rechunk is provided on their github repository at https://github.com/hhd-dev/rechunk
