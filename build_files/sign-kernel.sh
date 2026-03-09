@@ -23,7 +23,7 @@ SERVICE_PATH="/etc/systemd/system/mok-enroll.service"
 
 VMLINUZ="$1"
 
-sbsign --key "$MOK_PRIV" --cert /usr/share/cert/MOK.der --output "$VMLINUZ" "$VMLINUZ"
+sbsign --key "$MOK_PRIV" --cert /usr/share/cert/MOK.pem --output "$VMLINUZ" "$VMLINUZ"
 shred -u "$MOK_PRIV" || rm -f "$MOK_PRIV"
 
 #umask 077
