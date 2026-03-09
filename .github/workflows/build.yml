@@ -104,7 +104,7 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
-        build-args: |
+          build-args: |
             KERNEL_SECRET=${{ secrets.KERNEL_SECRET }}
             MOK_PEM=${{ secrets.MOK_PEM }}
         env:
