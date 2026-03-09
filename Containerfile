@@ -58,10 +58,6 @@ COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
 
 RUN chmod +x /tmp/sign-kernel.sh
 
-RUN --mount=type=secret,id=kernel_secret \
-    KERNEL_SECRET="$(cat /run/secrets/kernel_secret)" \
-    sh /tmp/sign-kernel.sh
-
 
 
 
