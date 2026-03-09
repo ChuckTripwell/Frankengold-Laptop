@@ -65,19 +65,18 @@ RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 
 
+
+
+
+COPY build_files/ /build_files/
+
+
 RUN --mount=type=secret,id=KERNEL_SECRET,target=/tmp/MOK.priv \
     VMLINUZ_PATH=$(ls /usr/lib/modules/*/vmlinuz | head -n 1) && \
-    sbsign --key /tmp/MOK.priv --cert build_files/MOK.pem --output "$VMLINUZ_PATH" "$VMLINUZ_PATH"
+    sbsign --key /tmp/MOK.priv --cert /build_files/MOK.pem --output "$VMLINUZ_PATH" "$VMLINUZ_PATH"
 
 
-
-
-
-#COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
-#RUN chmod +x /tmp/sign-kernel.sh
-#RUN /tmp/sign-kernel.sh /usr/lib/modules/*/vmlinuz
-#RUN rm -f /tmp/MOK.priv
-
+#RUN rm -rf /build_files
 
 
 
