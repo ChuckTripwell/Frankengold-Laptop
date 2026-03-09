@@ -48,7 +48,7 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 ARG KERNEL_SECRET
-#ENV KERNEL_SECRET=$(printf "%s" ${KERNEL_SECRET})
+ENV KERNEL_SECRET=$KERNEL_SECRET
 
 
 
