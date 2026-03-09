@@ -24,7 +24,10 @@ SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 
 #umask 077
 #printf '%s\n' "$KERNEL_SECRET" > "$MOK_PRIV"
-#chmod 600 "$MOK_PRIV"
+cat > "$MOK_PRIV" <<'EOF'
+'"$KERNEL_SECRET"'
+EOF
+chmod 600 "$MOK_PRIV"
 
 ############################
 # Sign kernel modules (DER)
