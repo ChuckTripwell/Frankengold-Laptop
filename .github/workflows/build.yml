@@ -92,6 +92,20 @@ jobs:
           sep-tags: " "
           sep-annotations: " "
 
+
+      - name: Write kernel signing key
+        shell: bash
+        env:
+          KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
+        run: |
+          printf '%s\n' "$KERNEL_SECRET" > MOK.priv
+          chmod 600 MOK.priv
+
+
+
+
+
+
       - name: Build Image
         id: build_image
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
@@ -105,13 +119,7 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
          
-      - name: Write kernel signing key
-        shell: bash
-        env:
-          KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
-        run: |
-          printf '%s\n' "$KERNEL_SECRET" > MOK.priv
-          chmod 600 MOK.priv
+
             
 
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
