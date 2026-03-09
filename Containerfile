@@ -54,13 +54,11 @@ RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 ARG KERNEL_SECRET
 ARG MOK_PEM
 
-RUN echo "${KERNEL_SECRET}" > /tmp/MOK.key && \
-    echo "${MOK_PEM}" > /tmp/MOK.pem && \
-    if [ ! -s /tmp/MOK.key ]; then echo "Key file is empty"; exit 1; fi && \
-    openssl rsa -in /tmp/MOK.key -out /tmp/MOK.priv && \
+RUN echo "$MOK_PEM" > /tmp/MOK.pem && \
+    echo "$KERNEL_SECRET" | openssl rsa -out /tmp/MOK.priv && \
     sbsign --key /tmp/MOK.priv --cert /tmp/MOK.pem --output /usr/lib/modules/*/vmlinuz /usr/lib/modules/*/vmlinuz && \
     depmod -a $(basename /usr/lib/modules/*) && \
-    rm /tmp/MOK.key /tmp/MOK.priv /tmp/MOK.pem
+    rm /tmp/MOK.priv /tmp/MOK.pem
 
 
 #COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
