@@ -33,6 +33,35 @@ RUN rm -rf /lib/modules
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
+
+
+
+
+
+
+
+
+
+
+# :::::: Run bash scripts :::::: 
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    /ctx/custom-kernel.sh
+
+
+
+
+
+
+
+
+
+
+
+
+
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install rpmdevtools akmods
 
@@ -65,12 +94,7 @@ RUN systemctl enable /etc/systemd/system/add-mok-key.service
 
 
 
-# :::::: Run bash scripts :::::: 
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=cache,dst=/var/cache \
-    --mount=type=cache,dst=/var/log \
-    --mount=type=tmpfs,dst=/tmp \
-    /ctx/custom-kernel.sh
+
 
 
 
