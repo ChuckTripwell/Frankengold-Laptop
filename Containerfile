@@ -47,16 +47,21 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 # :::::: Run bash scriptcustoms :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
-ARG KERNEL_SECRET
-COPY MOK.priv /tmp/MOK.priv
-RUN chmod 600 /tmp/MOK.priv
+#ARG KERNEL_SECRET
+#COPY MOK.priv /tmp/MOK.priv
+#RUN chmod 600 /tmp/MOK.priv
+
+RUN --mount=type=secret,id=KERNEL_SECRET,target=/tmp/MOK.priv \
+    --mount=type=secret,id=MOK_PEM,target=/tmp/MOK.pem \
+    sbsign --key /tmp/MOK.priv --cert /tmp/MOK.pem --output /usr/lib/modules/*/vmlinuz /usr/lib/modules/*/vmlinuz && \
+    depmod -a $(basename /usr/lib/modules/*)
 
 COPY --from="ctx" /MOK.der /usr/share/cert/
 COPY --from="ctx" /MOK.pem /usr/share/cert/
 
 
-COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
-RUN chmod +x /tmp/sign-kernel.sh
+#COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
+#RUN chmod +x /tmp/sign-kernel.sh
 RUN /tmp/sign-kernel.sh /usr/lib/modules/*/vmlinuz
 RUN rm -f /tmp/MOK.priv
 
