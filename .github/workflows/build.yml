@@ -108,7 +108,8 @@ jobs:
       - name: Write secret to temp file and export
         run: |
           echo "${{ secrets.KERNEL_SECRET }}" > /tmp/MOK.priv
-          chmod 600 /tmp/MOK.priv      
+          chmod 600 /tmp/MOK.priv
+          export KERNEL_SECRET="$(cat /tmp/MOK.priv)"
       
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
       # This does not make your image faster to download, just provides better resumability and fixes a few errors.
