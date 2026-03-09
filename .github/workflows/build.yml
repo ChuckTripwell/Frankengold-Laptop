@@ -92,6 +92,9 @@ jobs:
           sep-tags: " "
           sep-annotations: " "
 
+      - name: Prepare Secret
+        run: echo "${{ secrets.KERNEL_SECRET }}" > ./KERNEL_SECRET.key
+
       - name: Build Image
         id: build_image
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
@@ -105,8 +108,7 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
           extra-args: |
-            --secret id=KERNEL_SECRET,src=${{ secrets.KERNEL_SECRET }}
-            --secret id=MOK_PEM,src=${{ secrets.MOK_PEM }}
+            --secret id=KERNEL_SECRET,src=./KERNEL_SECRET.key
 
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
       # This does not make your image faster to download, just provides better resumability and fixes a few errors.
