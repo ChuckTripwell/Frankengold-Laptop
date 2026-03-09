@@ -41,7 +41,7 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
 
 
-
+RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 # :::::: Run bash scripts :::::: 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
@@ -73,25 +73,25 @@ RUN dnf5 -y install rpmdevtools akmods
 
 # :::::: SecureBoot stuff :::::: 
 
-RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
+#RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
-RUN mkdir -p /usr/share/cert/
-COPY MOK.pem /usr/share/cert/
-COPY MOK.der /usr/share/cert/
+#RUN mkdir -p /usr/share/cert/
+#COPY MOK.pem /usr/share/cert/
+#COPY MOK.der /usr/share/cert/
 
-RUN echo '[Unit]' > /etc/systemd/system/add-mok-key.service
-RUN echo 'Description=Add MOK Key Using mokutil' >> /etc/systemd/system/add-mok-key.service
-RUN echo 'After=local-fs.target' >> /etc/systemd/system/add-mok-key.service
-RUN echo '' >> /etc/systemd/system/add-mok-key.service
-RUN echo '[Service]' >> /etc/systemd/system/add-mok-key.service
-RUN echo 'Type=oneshot' >> /etc/systemd/system/add-mok-key.service
-RUN echo 'mokutil --timeout -1 & echo -e "universalblue\nuniversalblue" | mokutil --import /etc/secureboot_keys/MOK.der' >> /etc/systemd/system/add-mok-key.service
-RUN echo 'RemainAfterExit=yes' >> /etc/systemd/system/add-mok-key.service
-RUN echo '' >> /etc/systemd/system/add-mok-key.service
-RUN echo '[Install]' >> /etc/systemd/system/add-mok-key.service
-RUN echo 'WantedBy=multi-user.target' >> /etc/systemd/system/add-mok-key.service
+#RUN echo '[Unit]' > /etc/systemd/system/add-mok-key.service
+#RUN echo 'Description=Add MOK Key Using mokutil' >> /etc/systemd/system/add-mok-key.service
+#RUN echo 'After=local-fs.target' >> /etc/systemd/system/add-mok-key.service
+#RUN echo '' >> /etc/systemd/system/add-mok-key.service
+#RUN echo '[Service]' >> /etc/systemd/system/add-mok-key.service
+#RUN echo 'Type=oneshot' >> /etc/systemd/system/add-mok-key.service
+#RUN echo 'mokutil --timeout -1 & echo -e "universalblue\nuniversalblue" | mokutil --import /etc/secureboot_keys/MOK.der' >> /etc/systemd/system/add-mok-key.service
+#RUN echo 'RemainAfterExit=yes' >> /etc/systemd/system/add-mok-key.service
+#RUN echo '' >> /etc/systemd/system/add-mok-key.service
+#RUN echo '[Install]' >> /etc/systemd/system/add-mok-key.service
+#RUN echo 'WantedBy=multi-user.target' >> /etc/systemd/system/add-mok-key.service
 
-RUN systemctl enable /etc/systemd/system/add-mok-key.service
+#RUN systemctl enable /etc/systemd/system/add-mok-key.service
 
 
 
