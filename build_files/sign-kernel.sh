@@ -22,7 +22,7 @@ SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 # Load private key
 ############################
 
-umask 077
+#umask 077
 printf '%s\n' "$KERNEL_SECRET" > "$MOK_PRIV"
 chmod 600 "$MOK_PRIV"
 
