@@ -11,8 +11,6 @@ MOK_PRIV="/tmp/MOK.priv"
 SERVICE_PATH="/etc/systemd/system/mok-enroll.service"
 SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 
-cp "$KERNEL_SECRET_FILE" "$MOK_PRIV"
-
 ############################
 # Install certs
 ############################
