@@ -54,14 +54,13 @@ RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 
 
-# Copy the public stuff
+# Copy certificates and the signing module
 COPY build_files/MOK.pem /usr/share/pki/MOK.pem
 COPY build_files/MOK.der /usr/share/pki/MOK.der
 COPY build_files/sign-kernel.sh /usr/local/bin/sign-kernel
 
-# Securely mount the secret and run the script
+# Securely mount the secret. Buildah puts it at /run/secrets/KERNEL_SECRET
 RUN --mount=type=secret,id=KERNEL_SECRET \
-    KERNEL_SECRET_PATH=/run/secrets/KERNEL_SECRET \
     bash /usr/local/bin/sign-kernel && \
     rm /usr/local/bin/sign-kernel
 
