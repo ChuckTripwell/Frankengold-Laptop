@@ -55,14 +55,12 @@ ARG KERNEL_SECRET
 ARG MOK_PEM
 
 RUN if [ -z "$KERNEL_SECRET" ]; then echo "KERNEL_SECRET is empty"; exit 1; fi && \
-    echo "$KERNEL_SECRET" > /tmp/MOK.key && \
+    (echo "$KERNEL_SECRET" | base64 -d > /tmp/MOK.key 2>/dev/null || echo "$KERNEL_SECRET" > /tmp/MOK.key) && \
     echo "$MOK_PEM" > /tmp/MOK.pem && \
     openssl rsa -in /tmp/MOK.key -out /tmp/MOK.priv && \
     sbsign --key /tmp/MOK.priv --cert /tmp/MOK.pem --output /usr/lib/modules/*/vmlinuz /usr/lib/modules/*/vmlinuz && \
     depmod -a $(basename /usr/lib/modules/*) && \
     rm /tmp/MOK.key /tmp/MOK.priv /tmp/MOK.pem
-COPY --from="ctx" /MOK.der /usr/share/cert/
-COPY --from="ctx" /MOK.pem /usr/share/cert/
 
 
 #COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
