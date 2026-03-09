@@ -47,20 +47,22 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 # :::::: Run bash scriptcustoms :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
-ARG KERNEL_SECRET
-ENV KERNEL_SECRET=${KERNEL_SECRET}
-RUN umask 077 \
-    && printf '%s\n' "$KERNEL_SECRET" > /tmp/MOK.priv \
-    && chmod 600 /tmp/MOK.priv
+#ARG KERNEL_SECRET
+#ENV KERNEL_SECRET=${KERNEL_SECRET}
+
 
 COPY --from="ctx" /MOK.der /usr/share/cert/
 
 COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
 RUN chmod +x /tmp/sign-kernel.sh
 
-RUN /tmp/sign-kernel.sh \
-    && /tmp/sign-kernel.sh \
-    && rm -f /tmp/MOK.priv
+
+RUN --mount=type=secret,id=KERNEL_SECRET,target=/tmp/MOK.priv \
+    chmod 600 /tmp/MOK.priv \
+    && /tmp/sign-kernel.sh
+
+
+RUN rm -f /tmp/MOK.priv
 
 
 
