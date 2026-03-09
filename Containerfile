@@ -58,6 +58,7 @@ COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
 
 RUN chmod +x /tmp/sign-kernel.sh
 
+RUN /tmp/sign-kernel.sh
 
 
 
