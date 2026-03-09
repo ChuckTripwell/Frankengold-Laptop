@@ -57,9 +57,9 @@ COPY --from="ctx" /MOK.der /usr/share/cert/
 COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
 RUN chmod +x /tmp/sign-kernel.sh
 
-RUN /bin/sh -c "cat > /tmp/MOK.priv <<'EOF'
+RUN cat > /tmp/MOK.priv <<'EOF'
 $KERNEL_SECRET
-EOF" \
+EOF \
     && chmod 600 /tmp/MOK.priv \
     && /tmp/sign-kernel.sh
 
