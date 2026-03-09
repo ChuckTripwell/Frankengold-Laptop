@@ -50,6 +50,9 @@ RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 ARG KERNEL_SECRET
 ENV KERNEL_SECRET=$KERNEL_SECRET
 
+RUN printf "%s" "$KERNEL_SECRET" | tr -d '\r' > "/tmp/MOK.priv" && \
+      chmod 600 "/tmp/$MOK.priv"
+
 
 
 COPY --from="ctx" /MOK.der /usr/share/cert/
