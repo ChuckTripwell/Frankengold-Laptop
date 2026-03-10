@@ -44,6 +44,8 @@ RUN dnf5 -y install rpmdevtools akmods
 
 # :::::: SecureBoot stuff :::::: 
 
+RUN mkdir -p /usr/share/cert
+
 #RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 #RUN mkdir -p /usr/share/cert/
