@@ -2,13 +2,11 @@
 set -euo pipefail
 
 log() {
-    local PREFIX="[custom-kernel]"
-    echo -e "${PREFIX} $*"
+    echo "[custom-kernel] $*"
 }
 
 error() {
-    local PREFIX="[custom-kernel] Error:"
-    echo -e "${PREFIX} $*"
+    echo "[custom-kernel] Error: $*"
 }
 
 log "Starting custom-kernel signing module..."
@@ -32,96 +30,73 @@ if ! diff -q \
     exit 1
 fi
 
-# Detect installed kernel version
-KERNEL_VERSION="$(uname -r)"
-log "Detected kernel version: ${KERNEL_VERSION}"
+# Locate the kernel directory
+KERNEL_DIR="$(find /usr/lib/modules -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+VMLINUZ="${KERNEL_DIR}/vmlinuz"
 
-# Sign kernel image
-sign_kernel() {
-    local MODULE_ROOT="/usr/lib/modules/${KERNEL_VERSION}"
-    local VMLINUZ="${MODULE_ROOT}/vmlinuz"
+if [[ ! -f "${VMLINUZ}" ]]; then
+    error "Kernel image not found at ${VMLINUZ}"
+    exit 1
+fi
 
-    if [[ -f "${VMLINUZ}" ]]; then
-        log "Signing kernel image: ${VMLINUZ}"
-        local SIGNED_VMLINUZ
-        SIGNED_VMLINUZ="$(mktemp)"
+log "Signing kernel image: ${VMLINUZ}"
+SIGNED_VMLINUZ="$(mktemp)"
+sbsign --key "${SIGNING_KEY}" --cert "${SIGNING_CERT}" --output "${SIGNED_VMLINUZ}" "${VMLINUZ}"
 
-        sbsign \
-            --key  "${SIGNING_KEY}" \
-            --cert "${SIGNING_CERT}" \
-            --output "${SIGNED_VMLINUZ}" \
-            "${VMLINUZ}"
+if ! sbverify --cert "${SIGNING_CERT}" "${SIGNED_VMLINUZ}"; then
+    error "Kernel signature verification failed"
+    rm -f "${SIGNED_VMLINUZ}"
+    exit 1
+fi
 
-        if ! sbverify --cert "${SIGNING_CERT}" "${SIGNED_VMLINUZ}"; then
-            error "Kernel signature verification failed"
-            rm -f "${SIGNED_VMLINUZ}"
-            return 1
-        fi
+install -m 0644 "${SIGNED_VMLINUZ}" "${VMLINUZ}"
+rm -f "${SIGNED_VMLINUZ}"
 
-        install -m 0644 "${SIGNED_VMLINUZ}" "${VMLINUZ}"
-        rm -f "${SIGNED_VMLINUZ}"
-    else
-        error "Can't find kernel image: ${VMLINUZ}"
-        return 1
-    fi
+sha256sum "${VMLINUZ}" > /tmp/vmlinuz.sha
 
-    sha256sum "${VMLINUZ}" > /tmp/vmlinuz.sha
-}
+# Sign all modules in that directory
+SIGN_FILE="${KERNEL_DIR}/build/scripts/sign-file"
 
-# Sign all kernel modules
-sign_kernel_modules() {
-    local MODULE_ROOT="/usr/lib/modules/${KERNEL_VERSION}"
-    local SIGN_FILE="${MODULE_ROOT}/build/scripts/sign-file"
+if [[ ! -x "${SIGN_FILE}" ]]; then
+    error "sign-file not found or not executable: ${SIGN_FILE}"
+    exit 1
+fi
 
-    if [[ ! -x "${SIGN_FILE}" ]]; then
-        error "sign-file not found or not executable: ${SIGN_FILE}"
-        return 1
-    fi
+log "Signing kernel modules..."
+while IFS= read -r -d '' mod; do
+    case "${mod}" in
+    *.ko)
+        "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${mod}" ;;
+    *.ko.xz)
+        xz -d -q "${mod}"
+        raw="${mod%.xz}"
+        "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}"
+        xz -z -q "${raw}" ;;
+    *.ko.zst)
+        zstd -d -q --rm "${mod}"
+        raw="${mod%.zst}"
+        "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}"
+        zstd -q "${raw}" ;;
+    *.ko.gz)
+        gunzip -q "${mod}"
+        raw="${mod%.gz}"
+        "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}"
+        gzip -q "${raw}" ;;
+    esac
+done < <(find "${KERNEL_DIR}" -type f \( -name "*.ko" -o -name "*.ko.xz" -o -name "*.ko.zst" -o -name "*.ko.gz" \) -print0)
 
-    while IFS= read -r -d '' mod; do
-        case "${mod}" in
-        *.ko)
-            "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${mod}" || return 1
-            ;;
-        *.ko.xz)
-            xz -d -q "${mod}"
-            raw="${mod%.xz}"
-            "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}" || return 1
-            xz -z -q "${raw}"
-            ;;
-        *.ko.zst)
-            zstd -d -q --rm "${mod}"
-            raw="${mod%.zst}"
-            "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}" || return 1
-            zstd -q "${raw}"
-            ;;
-        *.ko.gz)
-            gunzip -q "${mod}"
-            raw="${mod%.gz}"
-            "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}" || return 1
-            gzip -q "${raw}"
-            ;;
-        esac
-    done < <(find "${MODULE_ROOT}" -type f \( -name "*.ko" -o -name "*.ko.xz" -o -name "*.ko.zst" -o -name "*.ko.gz" \) -print0)
-}
+# Create MOK enroll service
+log "Creating MOK enroll unit..."
+UNIT_NAME="mok-enroll.service"
+UNIT_FILE="/usr/lib/systemd/system/${UNIT_NAME}"
+MOK_CERT="/usr/share/cert/MOK.der"
+TMP_DER="$(mktemp)"
 
-# Create MOK enroll systemd service
-create_mok_enroll_unit() {
-    local UNIT_NAME="mok-enroll.service"
-    local UNIT_FILE="/usr/lib/systemd/system/${UNIT_NAME}"
-    local MOK_CERT="/usr/share/cert/MOK.der"
-    local TMP_DER
-    TMP_DER="$(mktemp)"
+openssl x509 -in "${SIGNING_CERT}" -outform DER -out "${TMP_DER}"
+install -D -m 0644 "${TMP_DER}" "${MOK_CERT}"
+rm -f "${TMP_DER}"
 
-    openssl x509 \
-        -in "${SIGNING_CERT}" \
-        -outform DER \
-        -out "${TMP_DER}" || { rm -f "${TMP_DER}"; return 1; }
-
-    install -D -m 0644 "${TMP_DER}" "${MOK_CERT}"
-    rm -f "${TMP_DER}"
-
-    install -D -m 0644 /dev/stdin "${UNIT_FILE}" <<EOF
+install -D -m 0644 /dev/stdin "${UNIT_FILE}" <<EOF
 [Unit]
 Description=Enroll MOK key on first boot
 ConditionPathExists=${MOK_CERT}
@@ -137,21 +112,10 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF
 
-    systemctl -f enable "${UNIT_NAME}"
-    log "Created and enabled ${UNIT_NAME}"
-}
-
-# Run signing steps
-log "Signing the kernel."
-sign_kernel || exit 1
-
-log "Signing kernel modules."
-sign_kernel_modules || exit 1
-
-log "Creating MOK enroll unit for first boot."
-create_mok_enroll_unit || exit 1
+systemctl -f enable "${UNIT_NAME}"
 
 # Final verification
 sha256sum -c /tmp/vmlinuz.sha || { error "Kernel modified after signing."; exit 1; }
 rm -f /tmp/vmlinuz.sha
+
 log "Kernel signing complete."
