@@ -99,7 +99,7 @@ jobs:
         run: |
           printf '%s\n' "$KERNEL_SECRET" > MOK.priv
           chmod 600 MOK.priv
-          cp files/build_files/MOK.pem MOK.pem
+          cp build_files/MOK.pem MOK.pem
 
       - name: Build Image
         id: build_image
