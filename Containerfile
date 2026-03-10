@@ -33,18 +33,18 @@ RUN rm -rf /lib/modules
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
+
+# :::::: SecureBoot stuff ::::::
 RUN mkdir -p /usr/share/cert
 COPY MOK.priv /tmp/cert/MOK.priv
 COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
+COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
+RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
+
 
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install rpmdevtools akmods
-
-
-
-
-
 
 
 # :::::: SecureBoot stuff :::::: 
