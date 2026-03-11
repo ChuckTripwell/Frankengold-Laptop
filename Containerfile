@@ -36,7 +36,7 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install --allowerasing install rpmdevtools akmods jq
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods jq kmodtool kmod-devel
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
@@ -53,7 +53,7 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 RUN dnf5 -y install --allowerasing install python3-pygame
 
 # :::::: SecureBoot stuff :::::: 
-RUN dnf5 -y install --allowerasing mokutil sbsigntools dracut
+RUN dnf5 -y install --allowerasing mokutil sbsigntools
 
 RUN mkdir -p /usr/share/cert
 COPY MOK.priv /tmp/cert/MOK.priv
