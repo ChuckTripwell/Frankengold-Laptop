@@ -31,8 +31,9 @@ if ! diff -q \
 fi
 
 # Locate the kernel directory
-KERNEL_DIR="$(find /usr/lib/modules -mindepth 1 -maxdepth 1 -type d | head -n 1)"
-VMLINUZ="${KERNEL_DIR}/vmlinuz"
+for KERNEL_DIR in /usr/lib/modules/*; do
+    VMLINUZ="${KERNEL_DIR}/vmlinuz"
+done
 
 if [[ ! -f "${VMLINUZ}" ]]; then
     error "Kernel image not found at ${VMLINUZ}"
@@ -83,7 +84,8 @@ while IFS= read -r -d '' mod; do
         "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}"
         gzip -q "${raw}" ;;
     esac
-done < <(find "${KERNEL_DIR}" -type f \( -name "*.ko" -o -name "*.ko.xz" -o -name "*.ko.zst" -o -name "*.ko.gz" \) -print0)
+done < <(find "${KERNEL_DIR}" "${KERNEL_DIR}/extra" "${KERNEL_DIR}/updates" \
+    -type f \( -name "*.ko" -o -name "*.ko.xz" -o -name "*.ko.zst" -o -name "*.ko.gz" \) -print0 2>/dev/null)
 
 # Create MOK enroll service
 log "Creating MOK enroll unit..."
