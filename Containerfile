@@ -68,7 +68,7 @@ RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh
 
 
 
-RUN akmods --kernels $(ls /usr/lib/modules) && dracut -f --kver $(ls /usr/lib/modules)
+RUN akmods --kernels $(ls /usr/lib/modules/*) && dracut -f --kver $(ls /usr/lib/modules/*)
 
 
 
