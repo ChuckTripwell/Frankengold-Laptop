@@ -32,11 +32,8 @@ RUN rm -rf /lib/modules
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
-# :::::: Installing some packages :::::: 
-RUN dnf5 -y install --allowerasing mokutil sbsigntools
-
-# :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install rpmdevtools akmods
+# test for grub signing
+RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
@@ -52,7 +49,11 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install python3-pygame
 
+# :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
+RUN dnf5 -y install rpmdevtools akmods
+
 # :::::: SecureBoot stuff ::::::
+RUN dnf5 -y install --allowerasing mokutil sbsigntools
 RUN mkdir -p /usr/share/cert
 COPY MOK.priv /tmp/cert/MOK.priv
 COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
