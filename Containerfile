@@ -66,6 +66,12 @@ RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh
 COPY --from=ctx sign-akmods.sh /tmp/sign-akmods.sh 
 RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh 
 
+
+
+RUN akmods --kernels $(ls /usr/lib/modules) && dracut -f --kver $(ls /usr/lib/modules)
+
+
+
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
