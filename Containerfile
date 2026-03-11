@@ -30,13 +30,12 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 # :::::: forcefully remove and replace kernel :::::: 
 RUN mkdir -p /tmp/tmp
 # ...?
-RUN mkdir -p /tmp/tmp && \
-    find /usr/lib/modules -mindepth 2 -maxdepth 2 -type d -exec cp -r {} /tmp/tmp/ \;
+RUN find /usr/lib/modules -mindepth 2 -maxdepth 2 -type d -exec cp -r {} /tmp/tmp \;
 RUN rm -rf /usr/lib/modules
 COPY --from=cachyos /usr/lib/modules /usr/lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 # ...?
-RUN cp /tmp/tmp/* /usr/lib/modules/*/
+RUN cp -r /tmp/tmp/* /usr/lib/modules/*/
 
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
