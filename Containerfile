@@ -63,8 +63,8 @@ COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
 COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
-#COPY --from=ctx sign-akmods.sh /tmp/sign-akmods.sh 
-#RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh 
+COPY --from=ctx sign-akmods.sh /tmp/sign-akmods.sh 
+RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh 
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
