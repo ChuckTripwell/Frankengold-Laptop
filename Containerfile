@@ -35,6 +35,9 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
+# :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods
+
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
 RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
@@ -47,7 +50,7 @@ RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings 
 RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: install additional stuff :::::: 
-RUN dnf5 -y install python3-pygame
+RUN dnf5 -y install --allowerasing install python3-pygame
 
 # :::::: SecureBoot stuff ::::::
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
@@ -58,9 +61,6 @@ COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh
 COPY --from=ctx sign-nvidia.sh /tmp/sign-nvidia.sh
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-nvidia.sh
-
-# :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install rpmdevtools akmods
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
