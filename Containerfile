@@ -32,6 +32,9 @@ RUN rm -rf /lib/modules
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
+# :::::: Installing some packages :::::: 
+RUN dnf5 -y install --allowerasing mokutil sbsigntools
+
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install rpmdevtools akmods
 
@@ -50,7 +53,6 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 RUN dnf5 -y install python3-pygame
 
 # :::::: SecureBoot stuff ::::::
-RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 RUN mkdir -p /usr/share/cert
 COPY MOK.priv /tmp/cert/MOK.priv
 COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
