@@ -71,7 +71,7 @@ while IFS= read -r -d '' mod; do
         xz -f -d -q "${mod}"
         raw="${mod%.xz}"
         "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}"
-        xz - f -z -q "${raw}" ;;
+        xz -f -z -q "${raw}" ;;
     *.ko.zst)
         zstd -d -q --rm "${mod}"
         raw="${mod%.zst}"
