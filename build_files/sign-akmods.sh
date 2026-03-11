@@ -30,7 +30,7 @@ if ! diff -q \
     exit 1
 fi
 
-SIGN_FILE="$(echo /usr/src/kernels/*/build/sign-file)"
+SIGN_FILE="$(find /usr/lib/modules/ -type f -name "sign-file")"
 
 if [[ ! -f "${SIGN_FILE}" ]]; then
     error "sign-file not found"
