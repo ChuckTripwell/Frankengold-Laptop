@@ -56,7 +56,6 @@ RUN dnf5 -y install python3-pygame
 RUN mkdir -p /usr/share/cert
 COPY MOK.priv /tmp/cert/MOK.priv
 COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
-COPY --from=ctx MOK.pem /etc/pki/akmods/certs/akmods-ublue.der
 COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
