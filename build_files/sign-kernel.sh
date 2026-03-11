@@ -84,7 +84,7 @@ while IFS= read -r -d '' mod; do
         "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}"
         gzip -q "${raw}" ;;
     esac
-done < <(find "${KERNEL_DIR}" "${KERNEL_DIR}/extra" "${KERNEL_DIR}/updates" \
+done < <(find "${KERNEL_DIR}" -type f \( -name "*.ko*" \) -print0 2>/dev/null) \
     -type f \( -name "*.ko" -o -name "*.ko.xz" -o -name "*.ko.zst" -o -name "*.ko.gz" \) -print0 2>/dev/null)
 
 # Create MOK enroll service
