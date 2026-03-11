@@ -35,6 +35,7 @@ RUN rm -rf /usr/lib/modules
 COPY --from=cachyos /usr/lib/modules /usr/lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 # ...?
+RUN find /usr/lib/modules -mindepth 2 -maxdepth 2 -type d -exec rm -rf {} /tmp/tmp \;
 RUN cp -r /tmp/tmp/* /usr/lib/modules/*/
 
 # test for grub signing
