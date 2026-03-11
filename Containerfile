@@ -40,8 +40,6 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install --allowerasing install rpmdevtools akmods
-# ...
-RUN dracut --force
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
