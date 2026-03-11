@@ -30,7 +30,8 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 # :::::: forcefully remove and replace kernel :::::: 
 RUN mkdir -p /tmp/tmp
 # ...?
-RUN cp $(ls -l /usr/lib/modules/*/ | grep '^d') /tmp/tmp/
+RUN mkdir -p /tmp/tmp && \
+    find /usr/lib/modules -mindepth 2 -maxdepth 2 -type d -exec cp -r {} /tmp/tmp/ \;
 RUN rm -rf /usr/lib/modules
 COPY --from=cachyos /usr/lib/modules /usr/lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
