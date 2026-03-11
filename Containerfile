@@ -60,6 +60,9 @@ COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
 COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
+# ...
+RUN cd /usr/lib/modules/*/ && ln -s ./extramodules ./extra
+
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
