@@ -12,7 +12,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers
+RUN pacman -S --noconfirm linux-cachyos-rc-lto-nvidia linux-cachyos-rc-lto-headers
 
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
@@ -30,13 +30,14 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /usr/lib/modules
 COPY --from=cachyos /usr/lib/modules /usr/lib/modules
-COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
+COPY --from=cachyos /usr/src/linux-cachyos-rc /usr/src/linux-cachyos-rc
+COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install --allowerasing install rpmdevtools akmods jq kmodtool kmod-devel
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods jq
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
@@ -53,18 +54,18 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 RUN dnf5 -y install --allowerasing install python3-pygame
 
 # :::::: SecureBoot stuff :::::: 
-RUN dnf5 -y install --allowerasing mokutil sbsigntools
-
-RUN mkdir -p /usr/share/cert
-COPY MOK.priv /tmp/cert/MOK.priv
-
-COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
-
-COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
-RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
-
-COPY --from=ctx sign-akmods.sh /tmp/sign-akmods.sh 
-RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh 
+#RUN dnf5 -y install --allowerasing mokutil sbsigntools
+#
+#RUN mkdir -p /usr/share/cert
+#COPY MOK.priv /tmp/cert/MOK.priv
+#
+#COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
+#
+#COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
+#RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
+#
+#COPY --from=ctx sign-akmods.sh /tmp/sign-akmods.sh 
+#RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh 
 
 
 
@@ -72,10 +73,15 @@ RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh
 #RUN dracut -force --kver $(ls /usr/lib/modules/*)
 
 
-RUN export KERNEL_NAME=$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}') && \
-    echo "Building Nvidia drivers for kernel: $KERNEL_NAME" && \
-    /usr/sbin/akmods --force --kernel "$KERNEL_NAME" && \
-    modinfo -V # Just to verify the tools are active
+
+
+
+RUN KERNEL_NAME=$(ls /usr/lib/modules | sort -V | tail -n1) && \
+    echo "Building Nvidia drivers for ${KERNEL_NAME}" && \
+    akmods --force --kernels "${KERNEL_NAME}" && \
+    dracut --kver "${KERNEL_NAME}" -f /tmp/initramfs.img && \
+    rm -rf /var/cache/akmods
+
 
 
 
