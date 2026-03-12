@@ -71,7 +71,7 @@ RUN dnf5 -y install --allowerasing install python3-pygame
 #RUN akmods --force --kernels $(ls /usr/lib/modules/*)
 #RUN dracut -force --kver $(ls /usr/lib/modules/*)
 
-
+RUN dnf5 -y install --allowerasing kernel-devel
 
 
 
