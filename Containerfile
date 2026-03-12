@@ -12,7 +12,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-cachyos-lto
+RUN pacman -S --noconfirm linux-cachyos-nvidia-open
 
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
@@ -53,15 +53,15 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 RUN dnf5 -y install --allowerasing install python3-pygame
 
 # :::::: SecureBoot stuff :::::: 
-#RUN dnf5 -y install --allowerasing mokutil sbsigntools
+RUN dnf5 -y install --allowerasing mokutil sbsigntools
 #
-#RUN mkdir -p /usr/share/cert
-#COPY MOK.priv /tmp/cert/MOK.priv
+RUN mkdir -p /usr/share/cert
+COPY MOK.priv /tmp/cert/MOK.priv
 #
-#COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
+COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
 #
-#COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
-#RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
+COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
+RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 #
 #COPY --from=ctx sign-akmods.sh /tmp/sign-akmods.sh 
 #RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh 
@@ -70,35 +70,6 @@ RUN dnf5 -y install --allowerasing install python3-pygame
 
 #RUN akmods --force --kernels $(ls /usr/lib/modules/*)
 #RUN dracut -force --kver $(ls /usr/lib/modules/*)
-
-RUN dnf5 -y install --allowerasing kernel-devel
-
-
-
-
-RUN KERNEL_NAME=$(ls /usr/lib/modules | sort -V | tail -n 1) && \
-    OLD_KVER=$(ls /usr/lib/modules | grep -v "${KERNEL_NAME}" | head -n 1) && \
-    echo "Refreshing Nvidia drivers from ${OLD_KVER} to ${KERNEL_NAME}" && \
-    \
-    # 1. Create the destination directory in the new kernel tree
-    mkdir -p "/usr/lib/modules/${KERNEL_NAME}/extra/nvidia" && \
-    \
-    # 2. Copy the existing pre-compiled modules from the previous kernel
-    # This assumes they were already built into the base image
-    cp /usr/lib/modules/${OLD_KVER}/extra/nvidia/*.ko "/usr/lib/modules/${KERNEL_NAME}/extra/nvidia/" 2>/dev/null || \
-    cp /usr/lib/modules/*/extra/nvidia/*.ko "/usr/lib/modules/${KERNEL_NAME}/extra/nvidia/" || true && \
-    \
-    # 3. Update the module dependency list for the new kernel
-    # This makes the kernel 'aware' of the moved drivers
-    depmod -a "${KERNEL_NAME}" && \
-    \
-    # 4. Refresh the initrd inside the module directory (safe for atomic build)
-    dracut --kver "${KERNEL_NAME}" -f "/usr/lib/modules/${KERNEL_NAME}/initrd"
-
-
-
-
-
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
