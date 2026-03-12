@@ -1,121 +1,83 @@
-#!/usr/bin/env bash
-set -euo pipefail
+##################################################################################################################################################
+### :::::: create a ctx :::::: ###
+##################################################################################################################################################
+FROM scratch AS ctx
+COPY build_files /
 
-log() {
-    echo "[custom-kernel] $*"
-}
+##################################################################################################################################################
+### :::::: pull cachyos :::::: ###
+##################################################################################################################################################
+FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 
-error() {
-    echo "[custom-kernel] Error: $*"
-}
+# :::::: prepare the kernel :::::: 
+RUN rm -rf /lib/modules/*
+RUN pacman -Sy --noconfirm
+RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers
 
-log "Starting custom-kernel signing module..."
+##################################################################################################################################################
+### :::::: pull ublue-os :::::: ###
+##################################################################################################################################################
+FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
 
-# Hardcoded signing configuration
-SIGNING_KEY="/tmp/cert/MOK.priv"
-SIGNING_CERT="/usr/share/cert/MOK.pem"
-MOK_PASSWORD="universalblue"
-SECURE_BOOT=true
+# :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
+RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
 
-# Verify key and cert
-openssl pkey -in "${SIGNING_KEY}" -noout >/dev/null 2>&1 \
-    || { error "sign.key is not a valid private key"; exit 1; }
-openssl x509 -in "${SIGNING_CERT}" -noout >/dev/null 2>&1 \
-    || { error "sign.cert is not a valid X509 cert"; exit 1; }
+# :::::: force distrobox to use a sub-directory for home :::::: 
+RUN mkdir -p /usr/share/distrobox/
+RUN touch /usr/share/distrobox/distrobox.conf
+RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
 
-if ! diff -q \
-    <(openssl pkey -in "${SIGNING_KEY}" -pubout) \
-    <(openssl x509 -in "${SIGNING_CERT}" -pubkey -noout); then
-    error "sign.key and sign.cert do not match"
-    exit 1
-fi
+# :::::: forcefully remove and replace kernel :::::: 
+RUN rm -rf /usr/lib/modules
+COPY --from=cachyos /usr/lib/modules /usr/lib/modules
+COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
-# Locate the kernel directory
-KERNEL_DIR="$(find /usr/lib/modules -mindepth 1 -maxdepth 1 -type d | head -n 1)"
-VMLINUZ="${KERNEL_DIR}/vmlinuz"
+# test for grub signing
+RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
-if [[ ! -f "${VMLINUZ}" ]]; then
-    error "Kernel image not found at ${VMLINUZ}"
-    exit 1
-fi
+# :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods jq
 
-log "Signing kernel image: ${VMLINUZ}"
-SIGNED_VMLINUZ="$(mktemp)"
-sbsign --key "${SIGNING_KEY}" --cert "${SIGNING_CERT}" --output "${SIGNED_VMLINUZ}" "${VMLINUZ}"
+# :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
+# :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
+RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
+#RUN echo "vm.swappiness=10" >> /etc/sysctl.conf
+RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.d/80-gamecompatibility.conf
 
-if ! sbverify --cert "${SIGNING_CERT}" "${SIGNED_VMLINUZ}"; then
-    error "Kernel signature verification failed"
-    rm -f "${SIGNED_VMLINUZ}"
-    exit 1
-fi
+# :::::: install preformence-related stuff :::::: 
+RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
+RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
+RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
-install -m 0644 "${SIGNED_VMLINUZ}" "${VMLINUZ}"
-rm -f "${SIGNED_VMLINUZ}"
+# :::::: install additional stuff :::::: 
+RUN dnf5 -y install --allowerasing install python3-pygame
 
-sha256sum "${VMLINUZ}" > /tmp/vmlinuz.sha
+# :::::: SecureBoot stuff :::::: 
+RUN dnf5 -y install --allowerasing mokutil sbsigntools
+#
+RUN mkdir -p /usr/share/cert
+COPY MOK.priv /tmp/cert/MOK.priv
+#
+COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
+#
+COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
+RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
+#
+#COPY --from=ctx sign-akmods.sh /tmp/sign-akmods.sh 
+#RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh 
 
-# Sign all modules in that directory
-SIGN_FILE="${KERNEL_DIR}/build/scripts/sign-file"
 
-if [[ ! -x "${SIGN_FILE}" ]]; then
-    error "sign-file not found or not executable: ${SIGN_FILE}"
-    exit 1
-fi
 
-log "Signing kernel modules..."
-while IFS= read -r -d '' mod; do
-    case "${mod}" in
-    *.ko)
-        "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${mod}" ;;
-    *.ko.xz)
-        xz -d -q "${mod}"
-        raw="${mod%.xz}"
-        "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}"
-        xz -z -q "${raw}" ;;
-    *.ko.zst)
-        zstd -d -q --rm "${mod}"
-        raw="${mod%.zst}"
-        "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}"
-        zstd -q "${raw}" ;;
-    *.ko.gz)
-        gunzip -q "${mod}"
-        raw="${mod%.gz}"
-        "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${raw}"
-        gzip -q "${raw}" ;;
-    esac
-done < <(find "${KERNEL_DIR}" -type f \( -name "*.ko" -o -name "*.ko.xz" -o -name "*.ko.zst" -o -name "*.ko.gz" \) -print0)
+#RUN akmods --force --kernels $(ls /usr/lib/modules/*)
+#RUN dracut -force --kver $(ls /usr/lib/modules/*)
 
-# Create MOK enroll service
-log "Creating MOK enroll unit..."
-UNIT_NAME="mok-enroll.service"
-UNIT_FILE="/usr/lib/systemd/system/${UNIT_NAME}"
-MOK_CERT="/usr/share/cert/MOK.der"
-TMP_DER="$(mktemp)"
+# :::::: slot the kernel into place :::::: 
+RUN mkdir -p /var/tmp
+RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
+      printf 'hostonly=no\nadd_dracutmodules+=" ostree bootc "' | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-modules.conf && \
+      sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
+      dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
-openssl x509 -in "${SIGNING_CERT}" -outform DER -out "${TMP_DER}"
-install -D -m 0644 "${TMP_DER}" "${MOK_CERT}"
-rm -f "${TMP_DER}"
-
-install -D -m 0644 /dev/stdin "${UNIT_FILE}" <<EOF
-[Unit]
-Description=Enroll MOK key on first boot
-ConditionPathExists=${MOK_CERT}
-ConditionPathExists=!/var/.mok-enrolled
-
-[Service]
-Type=oneshot
-ExecStart=/bin/sh -c '(echo "${MOK_PASSWORD}"; echo "${MOK_PASSWORD}") | mokutil --import "${MOK_CERT}"'
-ExecStartPost=/usr/bin/touch /var/.mok-enrolled
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl -f enable "${UNIT_NAME}"
-
-# Final verification
-sha256sum -c /tmp/vmlinuz.sha || { error "Kernel modified after signing."; exit 1; }
-rm -f /tmp/vmlinuz.sha
-
-log "Kernel signing complete."
+#  :::::: finish :::::: 
+ENV DRACUT_NO_XATTR=1
+RUN bootc container lint
