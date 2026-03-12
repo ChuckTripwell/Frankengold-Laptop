@@ -45,9 +45,9 @@ RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility
 RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.d/80-gamecompatibility.conf
 
 # :::::: install preformence-related stuff :::::: 
-#RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
-#RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
-#RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
+RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
+RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
+RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install --allowerasing install python3-pygame
