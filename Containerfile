@@ -54,7 +54,7 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-
+COPY --from='cachyos' /usr/share/cert /usr/share/cert
 
 
 
