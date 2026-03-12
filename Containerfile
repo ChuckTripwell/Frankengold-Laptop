@@ -32,7 +32,7 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 #COPY --from=cachyos /usr/lib/modules /usr/lib/modules
 COPY --from=cachyos /usr/lib/modules /tmp/modules
 #COPY --from=cachyos /usr/share/licenses /usr/share/licenses
-RUN cd /tmp/modules/*/ && cp -r ./vmlinuz /usr/lib/modules/*/vmlinnuz
+RUN cd /tmp/modules/*/ && cp ./vmlinuz /usr/lib/modules/*/vmlinuz
 
 # test for grub signing
 #RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
