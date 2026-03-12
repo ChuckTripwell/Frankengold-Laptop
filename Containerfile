@@ -30,7 +30,6 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /usr/lib/modules
 COPY --from=cachyos /usr/lib/modules /usr/lib/modules
-COPY --from=cachyos /usr/src/linux-cachyos-rc /usr/src/linux-cachyos-rc
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 # test for grub signing
