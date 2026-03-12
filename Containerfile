@@ -17,7 +17,7 @@ RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
-FROM FROM ghcr.io/chucktripwell/silvercachy-laptop:latest
+FROM ghcr.io/chucktripwell/silvercachy-laptop:latest
 
 # :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
