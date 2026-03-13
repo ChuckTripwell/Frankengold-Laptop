@@ -1,15 +1,17 @@
-
-
-
 ##################################################################################################################################################
 ### :::::: pull cachyos :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/tapir/silvercachy-desktop-nvidia:latest AS cachyos
+FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
+
+# :::::: prepare the kernel :::::: 
+RUN rm -rf /lib/modules/*
+RUN pacman -Sy --noconfirm
+RUN pacman -S --noconfirm linux-cachyos linux-cachyos-headers
 
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
+FROM ghcr.io/chucktripwell/silvercachy-laptop:latest
 
 # :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
@@ -20,12 +22,17 @@ RUN touch /usr/share/distrobox/distrobox.conf
 RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
 
 # :::::: forcefully remove and replace kernel :::::: 
-RUN rm -rf /lib/modules
-COPY --from=cachyos /lib/modules /lib/modules
-COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
+#RUN rm -rf /usr/lib/modules
+#COPY --from=cachyos /usr/lib/modules /usr/lib/modules
+COPY --from=cachyos /usr/lib/modules /tmp/modules
+#COPY --from=cachyos /usr/share/licenses /usr/share/licenses
+RUN cd /tmp/modules/*/ && cp ./vmlinuz /usr/lib/modules/*/vmlinuz
+
+# test for grub signing
+#RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install rpmdevtools akmods
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
@@ -39,67 +46,19 @@ RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings 
 RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: install additional stuff :::::: 
-RUN dnf5 -y install python3-pygame
-
-##################################################################################################################################################
-### :::::: fixes :::::: ###
-##################################################################################################################################################
-
-# :::::: experimental millennium support :::::: 
-#RUN bash -c 'id(){ echo 1000; }; export -f id; curl -fsSL https://steambrew.app/install.sh -o /tmp/install.sh; sed -i "/:: Proceed with installation? \[Y\/n\]/d" /tmp/install.sh; bash /tmp/install.sh'
-
-# test for grub signing
-RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
-
-
-
-
-COPY --from='cachyos' /usr/share/cert /usr/share/cert
-
-COPY --from='cachyos' /usr/lib/systemd/system/mok-enroll.service /usr/lib/systemd/system/mok-enroll.service
-
-COPY --from='cachyos' /usr/src /usr/src
-
-RUN systemctl enable mok-enroll.service
-
-
-
-
-
-
-
-
-
+RUN dnf5 -y install --allowerasing install python3-pygame
 
 # :::::: SecureBoot stuff :::::: 
-#RUN dnf5 -y install --allowerasing mokutil sbsigntools
-#RUN mkdir -p /usr/share/cert
-#RUN mkdir -p /tmp/cert
-#COPY MOK.priv /tmp/cert/MOK.priv
-#OPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
-#COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
-#RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
+RUN dnf5 -y install --allowerasing mokutil sbsigntools
+RUN mkdir -p /usr/share/cert
+RUN mkdir -p /tmp/cert
+COPY MOK.priv /tmp/cert/MOK.priv
+COPY build_files/MOK.pem /usr/share/cert/MOK.pem
+COPY build_files/sign-kernel.sh /tmp/sign-kernel.sh 
+RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
-#COPY --from=ctx sign-akmods.sh /tmp/sign-akmods.sh 
-#RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##################################################################################################################################################
-### :::::: fixes end here :::::: ###
-##################################################################################################################################################
+#RUN akmods --force --kernels $(ls /usr/lib/modules/*)
+#RUN dracut -force --kver $(ls /usr/lib/modules/*)
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
