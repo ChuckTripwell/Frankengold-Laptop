@@ -43,6 +43,9 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install --allowerasing install python3-pygame
 
+# :::::: Force Nvidia GPU :::::: 
+RUN rpm-ostree kargs --append-if-missing=nvidia-drm.modeset=1
+
 # :::::: SecureBoot stuff :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
 RUN mkdir -p /usr/share/cert
