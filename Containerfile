@@ -13,6 +13,8 @@ RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers
 ##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
 
+RUN dnf5 -y remove rpmdevtools akmods
+
 # :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
 
@@ -27,7 +29,7 @@ COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 # test for grub signing
-#RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
+RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install --allowerasing install rpmdevtools akmods
