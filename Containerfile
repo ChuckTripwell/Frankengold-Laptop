@@ -61,8 +61,6 @@ RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh
 
 
 # test
-RUN akmods --force && depmod -a
-
 RUN rpm-ostree kargs \
   --append=rd.driver.blacklist=nouveau \
   --append=modprobe.blacklist=nouveau \
