@@ -13,7 +13,9 @@ RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers
 ##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
 
-RUN dnf5 -y remove rpmdevtools akmods
+RUN dnf5 -y remove rpmdevtools
+RUN dnf5 -y remove akmods
+RUN dnf5 -y remove kernel-devel-matched
 
 # :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
