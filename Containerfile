@@ -4,14 +4,15 @@
 FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 
 # :::::: prepare the kernel :::::: 
-RUN rm -rf /lib/modules/*
-RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers
+  RUN rm -rf /lib/modules/*
+  RUN pacman -Sy --noconfirm
+# "*-headers" file is required for SecureBoot to work properly
+  RUN pacman -S --noconfirm linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers
 
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/bazzite:testing
+FROM ghcr.io/ublue-os/bazzite-nvidia-open:testing
 
 # :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
@@ -26,7 +27,7 @@ RUN rm -rf /lib/modules/*
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
-#???
+# :::::: Fix Vulkan :::::: 
 RUN TMPDIR="$(mktemp -d)" && \
     dnf5 download "VK_hdr_layer" --destdir "$TMPDIR" && \
     RPM_FILE=$(ls "$TMPDIR"/*.rpm) && \
@@ -47,31 +48,20 @@ RUN TMPDIR="$(mktemp -d)" && \
     mkdir -p /usr/share/doc/VK_hdr_layer && \
     cp -v usr/share/doc/VK_hdr_layer/* /usr/share/doc/VK_hdr_layer/
 
-
-
-
-# test for grub signing
-RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
-
-# :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
-# :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
-RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
-#RUN echo "vm.swappiness=10" >> /etc/sysctl.conf
-RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.d/80-gamecompatibility.conf
-
-# :::::: install preformence-related stuff :::::: 
-RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
-RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
-RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
+# :::::: preformence-related stuff :::::: 
+# scx gui and settings - essential for performance
+  RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
+  RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
+  RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
+# Set vm.max_map_count for stability/improved gaming performance
+# https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count
+  RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
+  #RUN echo "vm.swappiness=10" >> /etc/sysctl.conf
+# found it somewhere... seems legit.
+  RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.d/80-gamecompatibility.conf
 
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install --allowerasing install python3-pygame
-
-# :::::: Fix Nvidia GPU ..? :::::: 
-RUN mkdir -p /etc/profile.d
-#RUN echo "export __NV_PRIME_RENDER_OFFLOAD=1" >> /etc/bash.bashrc
-#RUN echo "export __VK_LAYER_NV_optimus=NVIDIA_only" >> /etc/bash.bashrc
-#RUN echo "export __GLX_VENDOR_LIBRARY_NAME=nvidia" >> /etc/bash.bashrc
 
 # :::::: SecureBoot stuff :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
@@ -83,6 +73,7 @@ COPY build_files/sign-kernel.sh /tmp/sign-kernel.sh
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
+# do not move this segment!
 RUN dnf5 -y install --allowerasing install rpmdevtools akmods
 
 # :::::: slot the kernel into place :::::: 
