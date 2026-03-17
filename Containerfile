@@ -45,7 +45,7 @@ RUN dnf5 install -y --allowerasing \
     /rpms/nvidia/nvidia-container-toolkit-base-1* \
     /rpms/nvidia/libnvidia-container1-1* \
     /rpms/nvidia/libnvidia-container-tools-1* \
-      libva-nvidia-driver supergfxctl \
+      libva-nvidia-driver supergfxctl
 RUN cp /etc/modprobe.d/nvidia-modeset.conf /usr/lib/modprobe.d/nvidia-modeset.conf
 
 RUN TMPDIR="$(mktemp -d)" && \
@@ -60,7 +60,7 @@ RUN TMPDIR="$(mktemp -d)" && \
     cp -v usr/lib64/VK_hdr_layer/* /usr/lib64/VK_hdr_layer/ && \
     # Vulkan implicit layer
     mkdir -p /usr/share/vulkan/implicit_layer.d && \
-    cp -v usr/share/vulkan/implicit_layer.d/VkLayer_hdr_wsi.*.json \ && \
+    cp -v usr/share/vulkan/implicit_layer.d/VkLayer_hdr_wsi.*.json && \
         /usr/share/vulkan/implicit_layer.d/ && \
     # License & Docs
     mkdir -p /usr/share/licenses/VK_hdr_layer && \
