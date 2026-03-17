@@ -88,6 +88,8 @@ RUN echo "" >> /etc/systemd/system/selinux-boolean.service
 RUN echo "[Install]" >> /etc/systemd/system/selinux-boolean.service
 RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/selinux-boolean.service
 
+RUN systemctl enable selinux-boolean.service
+
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 # do not move this segment!
 RUN dnf5 -y install --allowerasing install rpmdevtools akmods
