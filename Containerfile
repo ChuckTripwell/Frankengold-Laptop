@@ -72,24 +72,6 @@ COPY build_files/MOK.pem /usr/share/cert/MOK.pem
 COPY build_files/sign-kernel.sh /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
-#RUN setsebool -P domain_kernel_load_modules on
-#
-# fix SELinux
-# 
-RUN echo "[Unit]" > /etc/systemd/system/selinux-boolean.service
-RUN echo "Description=Set SELinux boolean domain_kernel_load_modules" >> /etc/systemd/system/selinux-boolean.service
-RUN echo "After=network.target" >> /etc/systemd/system/selinux-boolean.service
-RUN echo "" >> /etc/systemd/system/selinux-boolean.service
-RUN echo "[Service]" >> /etc/systemd/system/selinux-boolean.service
-RUN echo "Type=oneshot" >> /etc/systemd/system/selinux-boolean.service
-RUN echo "ExecStart=/usr/sbin/setsebool -P domain_kernel_load_modules on" >> /etc/systemd/system/selinux-boolean.service
-RUN echo "RemainAfterExit=yes" >> /etc/systemd/system/selinux-boolean.service
-RUN echo "" >> /etc/systemd/system/selinux-boolean.service
-RUN echo "[Install]" >> /etc/systemd/system/selinux-boolean.service
-RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/selinux-boolean.service
-
-RUN systemctl enable selinux-boolean.service
-
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 # do not move this segment!
 RUN dnf5 -y install --allowerasing install rpmdevtools akmods
